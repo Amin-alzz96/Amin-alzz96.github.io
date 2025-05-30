@@ -52,7 +52,7 @@ class RAGTool:
             doc.metadata = doc.metadata or {}
             doc.metadata["source"] = doc.metadata.get("source", doc.page_content[:30])
         # Split documents into chunks for better retrieval
-        splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
+        splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
         docs = splitter.split_documents(documents)
         # Add metadata to each chunk (e.g., length)
         for chunk in docs:
@@ -167,5 +167,8 @@ def example():
             print(r)
     asyncio.run(run())
 
-if __name__ == "__main__":
-    example()
+
+
+
+# if __name__ == "__main__":
+#     example()
