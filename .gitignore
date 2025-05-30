@@ -8,3 +8,9 @@ wheels/
 
 # Virtual environments
 .venv
+.env
+
+#personal files
+context/
+.DS_Store
+vector_db/
