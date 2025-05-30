@@ -9,6 +9,9 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_community.chat_message_histories.in_memory import ChatMessageHistory
 import uuid
 
+# Global dictionary to store chat histories by session_id
+session_histories = {}
+
 # Agent instructions
 AGENT_INSTRUCTIONS = (
     "You are acting as Amin. You are answering questions on Amin’s website, "
@@ -34,7 +37,9 @@ def get_agent():
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, streaming=True)
     # Set up chat message history for the session
     def get_session_history(session_id: str):
-        return ChatMessageHistory()
+        if session_id not in session_histories:
+            session_histories[session_id] = ChatMessageHistory()
+        return session_histories[session_id]
     # Wrap the agent with message history support
     agent = initialize_agent(
         tools,
@@ -48,7 +53,6 @@ def get_agent():
         agent,
         get_session_history,
         input_messages_key="input",
-        history_messages_key="chat_history",
     )
     return agent_with_history
 

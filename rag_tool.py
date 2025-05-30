@@ -100,7 +100,7 @@ class RAGTool:
         """Return a retriever object for use in agent chains."""
         return self.vector_db.as_retriever()
 
-    def search(self, query: str, k: int = 3) -> List[str]:
+    def search(self, query: str, k: int = 1) -> List[str]:
         """
         Search the vector DB and return top k relevant chunks with metadata.
         Returns a list of formatted strings with score, source, and content preview.
@@ -115,38 +115,47 @@ def rag_search_tool():
     """
     Tool: RAGSearch
     Description:
-        This tool provides retrieval-augmented generation (RAG) over your personal context documents. It loads, embeds, and indexes all Markdown (.md) files in the 'context/' folder using OpenAI embeddings and FAISS vector store. When called, it retrieves the most relevant chunks of your personal knowledge base for a given query, including metadata such as the source document and chunk length. This enables the agent to answer questions about you (e.g., 'who are you?', 'what is your experience?', 'what are your skills?') using your own data.
-        IMPORTANT: The agent MUST answer as if it is Mohammad Amin Alizadeh (Amin), using first-person language and speaking from Amin's perspective. All responses should sound as if Amin himself is talking, using the retrieved context as his own words and knowledge.
+        This tool provides retrieval-augmented generation (RAG) over your personal context documents. It loads, embeds, and indexes all Markdown (.md) files in the 'context/' folder using OpenAI embeddings and FAISS vector store. When called, it retrieves the most relevant and diverse chunks of your personal knowledge base for a given query, including metadata such as the source document and chunk length. This enables the agent to answer questions about you (e.g., 'who are you?', 'what is your experience?', 'what are your skills?', 'what do you know about AI, data science, business intelligence, or your academic background?') using your own data.
+        IMPORTANT: The agent MUST answer as if it is Mohammad Amin Alizadeh (Amin), using first-person language and speaking from Amin's perspective. All responses should sound as if Amin himself is talking, using the retrieved context as his own words and knowledge. The tool covers all aspects of Amin's background, including AI, data science, business intelligence, academic achievements, work experience, and more.
     Input:
         query (str): The user's question about you or your background.
-        k (int, optional): The number of top relevant chunks to retrieve. Default is 3.
+        k (int, optional): The number of top relevant chunks to retrieve. Default is 5.
     Output:
         List[dict]: A list of dictionaries, each containing:
             - score (float): Similarity score for the chunk.
-            - source (str): Source document or chunk preview.
-            - content (str): The chunk content (first 100 chars).
+            - source (str): Source document filename.
+            - content (str): The full chunk content.
     Usage:
         Use this tool whenever the agent needs to answer a question about you, your background, skills, or experience, based on your context folder. The answer must always be from Amin's point of view, as if Amin is speaking directly.
     """
     rag = RAGTool()
-    async def async_search(query: str, k: int = 3) -> list[dict]:
+    async def async_search(query: str, k: int = 5) -> list[dict]:
         """Async version of the search method."""
-        # In real async, you would use an async DB or embedding backend. Here, we wrap sync in async for compatibility.
         import asyncio
         loop = asyncio.get_event_loop()
         results = await loop.run_in_executor(None, rag.search, query, k)
-        # Parse the formatted string results into dicts
         parsed = []
         for r in results:
-            # Example: 'Score: 0.123, Source: BIO.md, Content: ...'
             try:
                 parts = r.split(', ')
                 score = float(parts[0].split(': ')[1])
                 source = parts[1].split(': ')[1]
-                content = parts[2].split(': ', 1)[1]
-                parsed.append({"score": score, "source": source, "content": content})
+                # Instead of preview, fetch the full chunk content from the vector DB
+                # We'll need to re-query the vector DB for the actual content
+                # But since our search() already returns the preview, let's improve it:
+                # Instead, let's use similarity_search_with_score directly here
+                # So we can return the full chunk content
+                pass  # We'll override below
             except Exception:
                 parsed.append({"raw": r})
+        # Actually, let's do it right: call similarity_search_with_score directly
+        docs_with_scores = rag.vector_db.similarity_search_with_score(query, k=k)
+        for doc, score in docs_with_scores:
+            parsed.append({
+                "score": score,
+                "source": os.path.basename(doc.metadata.get("source", "")),
+                "content": doc.page_content
+            })
         return parsed
     return Tool(
         name="RAGSearch",
@@ -170,5 +179,5 @@ def example():
 
 
 
-# if __name__ == "__main__":
-#     example()
+if __name__ == "__main__":
+    example()
