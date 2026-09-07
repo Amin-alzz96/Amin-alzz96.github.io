@@ -17,3 +17,7 @@ vector_db/
 # test artifacts
 .playwright-mcp/
 *.png
+
+# Obsidian vault backup (private - never commit)
+obsidian_backup/
+backup_obsidian.sh
