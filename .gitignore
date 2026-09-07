@@ -21,3 +21,6 @@ vector_db/
 # Obsidian vault backup (private - never commit)
 obsidian_backup/
 backup_obsidian.sh
+
+# private project instructions
+CLAUDE.md
