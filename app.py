@@ -1,15 +1,23 @@
 """
-app.py: FastAPI app for Amin's RAG-based chatbot with session memory.
+app.py: FastAPI app for Amin's website chatbot, with session memory.
+Also serves the static frontend from docs/ so the whole site runs locally
+with a single `uvicorn app:app` command.
 """
 import uuid
-from fastapi import FastAPI, Request
+from pathlib import Path
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from main import get_agent, session_histories
 
-app = FastAPI()
+from main import chat, end_session
 
-# Allow CORS for all origins (customize for production)
+FRONTEND_DIR = Path(__file__).parent / "docs"
+
+app = FastAPI(title="Amin's CV chat API")
+
+# TODO Phase 4: restrict origins to the deployed frontend domain
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,28 +26,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class ChatRequest(BaseModel):
     session_id: str
     message: str
+
 
 class ChatResponse(BaseModel):
     response: str
     session_id: str
 
+
+class SessionRequest(BaseModel):
+    session_id: str
+
+
 @app.post("/start_session", response_model=ChatResponse)
 async def start_session():
     session_id = str(uuid.uuid4())
-    # Optionally, initialize session memory here
-    return ChatResponse(response="Welcome! I am Amin. How can I help you?", session_id=session_id)
+    return ChatResponse(
+        response="Hi, I'm Amin — well, my AI twin. Ask me anything about my work, skills, or background!",
+        session_id=session_id,
+    )
+
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(req: ChatRequest):
-    agent = get_agent()
-    result = await agent.ainvoke({"input": req.message}, config={"configurable": {"session_id": req.session_id}})
-    return ChatResponse(response=result["output"], session_id=req.session_id)
+    reply = await chat(req.session_id, req.message)
+    return ChatResponse(response=reply, session_id=req.session_id)
+
 
 @app.post("/end_session")
-async def end_session(req: ChatRequest):
-    # Remove session memory if exists
-    session_histories.pop(req.session_id, None)
+async def end_session_endpoint(req: SessionRequest):
+    end_session(req.session_id)
     return {"status": "Session ended", "session_id": req.session_id}
+
+
+# Mounted last so the API routes above take precedence.
+if FRONTEND_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

@@ -14,3 +14,6 @@ wheels/
 context/
 .DS_Store
 vector_db/
+# test artifacts
+.playwright-mcp/
+*.png
