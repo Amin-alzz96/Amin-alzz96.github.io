@@ -1,6 +1,6 @@
-# amin.int — Personal Website
+# Amin-alzz96.github.io — Personal Website
 
-My personal CV / portfolio site: **[amin-alzz96.github.io/amin_int](https://amin-alzz96.github.io/amin_int/)**
+My personal CV / portfolio site: **[amin-alzz96.github.io](https://amin-alzz96.github.io/)**
 
 Dark, minimal, single-column design with tab navigation — About, Experience, Education, Skills, Projects, and a CSS-only bookshelf of what I'm reading.
 
