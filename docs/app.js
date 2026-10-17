@@ -1,40 +1,50 @@
-/* Tab navigation with URL-hash deep linking + bookshelf scrolling. */
+/* Accessible tabs with shareable section URLs and bookshelf navigation. */
+const tabs = [...document.querySelectorAll('[role="tab"]')];
+const panels = [...document.querySelectorAll('[role="tabpanel"]')];
 
-const tabs = document.querySelectorAll(".tab");
-const panels = document.querySelectorAll(".panel");
-
-function activate(tabName, updateHash = true) {
-  // Panel ids are namespaced ("panel-books") so the URL hash ("#books") never
-  // matches a DOM id — otherwise the browser's native anchor-scroll fights the tabs.
-  const valid = [...panels].some((p) => p.id === "panel-" + tabName);
-  if (!valid) tabName = "about";
-
-  tabs.forEach((t) => {
-    const active = t.dataset.tab === tabName;
-    t.setAttribute("aria-selected", String(active));
-    if (active) t.scrollIntoView({ inline: "center", block: "nearest" });
+function activate(name, { updateHash = true, focusTab = false } = {}) {
+  // Section hashes stay separate from panel IDs to avoid native anchor scrolling.
+  const selected = tabs.find((tab) => tab.dataset.tab === name) || tabs[0];
+  if (!selected) return;
+  name = selected.dataset.tab;
+  tabs.forEach((tab) => {
+    const active = tab === selected;
+    tab.setAttribute('aria-selected', String(active));
+    tab.tabIndex = active ? 0 : -1;
   });
-  panels.forEach((p) => (p.hidden = p.id !== "panel-" + tabName));
-
-  if (updateHash) history.replaceState(null, "", "#" + tabName);
-  window.scrollTo({ top: 0, behavior: "instant" });
+  panels.forEach((panel) => { panel.hidden = panel.id !== 'panel-' + name; });
+  if (updateHash && location.hash !== '#' + name) {
+    history.pushState(null, '', '#' + name);
+  }
+  if (focusTab) selected.focus({ preventScroll: true });
+  selected.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'instant' });
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
-tabs.forEach((t) => t.addEventListener("click", () => activate(t.dataset.tab)));
-
-window.addEventListener("hashchange", () => activate(location.hash.slice(1), false));
-
-// Keyboard shortcuts 1-6 switch tabs (ignored while typing in inputs)
-document.addEventListener("keydown", (e) => {
-  if (e.target.matches("input, textarea") || e.metaKey || e.ctrlKey || e.altKey) return;
-  const idx = parseInt(e.key, 10) - 1;
-  if (idx >= 0 && idx < tabs.length) activate(tabs[idx].dataset.tab);
+tabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => activate(tab.dataset.tab));
+  tab.addEventListener('keydown', (event) => {
+    let next;
+    if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
+    if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+    if (event.key === 'Home') next = 0;
+    if (event.key === 'End') next = tabs.length - 1;
+    if (next === undefined) return;
+    event.preventDefault();
+    activate(tabs[next].dataset.tab, { focusTab: true });
+  });
 });
-
-// Initial tab from URL hash
-activate(location.hash.slice(1) || "about", false);
-
-// Bookshelf prev/next scrolling
-const shelf = document.getElementById("shelf");
-document.getElementById("shelf-prev")?.addEventListener("click", () => shelf.scrollBy({ left: -240 }));
-document.getElementById("shelf-next")?.addEventListener("click", () => shelf.scrollBy({ left: 240 }));
+window.addEventListener('hashchange', () => {
+  if (location.hash === '#main-content') return;
+  activate(location.hash.slice(1), { updateHash: false });
+});
+document.addEventListener('keydown', (event) => {
+  const target = event.target;
+  if (target.isContentEditable || target.closest('input, textarea, select') || event.metaKey || event.ctrlKey || event.altKey) return;
+  if (!/^[1-6]$/.test(event.key)) return;
+  activate(tabs[Number(event.key) - 1].dataset.tab, { focusTab: true });
+});
+activate(location.hash.slice(1) || 'about', { updateHash: false });
+const shelf = document.getElementById('shelf');
+document.getElementById('shelf-prev')?.addEventListener('click', () => shelf?.scrollBy({ left: -240 }));
+document.getElementById('shelf-next')?.addEventListener('click', () => shelf?.scrollBy({ left: 240 }));

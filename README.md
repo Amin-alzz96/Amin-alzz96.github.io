@@ -1,23 +1,24 @@
-# Amin-alzz96.github.io — Personal Website
+# Amin Alizadeh: AI & Data Engineer
 
-My personal CV / portfolio site: **[amin-alzz96.github.io](https://amin-alzz96.github.io/)**
+Personal portfolio: **[amin-alzz96.github.io](https://amin-alzz96.github.io/)**
 
-Dark, minimal, single-column design with tab navigation — About, Experience, Education, Skills, Projects, and a CSS-only bookshelf of what I'm reading.
+Enterprise AI work, data engineering experience, skills, credentials, personal projects, and a bookshelf. Built with HTML, CSS, and vanilla JavaScript, using the existing dark teal design.
 
-## Stack
+## Website
 
-- **Frontend** (`docs/`): hand-written HTML/CSS/vanilla JS, no build step, served by GitHub Pages
-- **Chat backend** (`app.py`, `main.py`): FastAPI + OpenAI — an AI twin that answers questions as me, with my profile loaded directly into the model context (deliberately no vector DB). Not deployed yet; the chat UI is parked for a future release.
+- Static files live in `docs/`, served by GitHub Pages from `main`.
+- Tabs support direct section links, keyboard navigation, and browser history.
+- Enterprise project descriptions distinguish individual and team contributions. Personal projects and learning labs have their own section.
+- Credential cards link to the supplied credential pages. SQLBI Mastering DAX is listed as professional development without a link.
 
-## Run locally
+Preview the public website without running the backend:
 
-```bash
-uv sync
-uv run uvicorn app:app --port 8000   # serves the site + chat API at localhost:8000
+```sh
+python3 -m http.server 8000 --directory docs
 ```
 
-> The `context/` knowledge-base folder and `.env` are intentionally untracked.
+## Backend
 
----
+The existing FastAPI chat backend (`app.py`, `main.py`) is paused. It is not deployed and no chat interface is exposed on the website. Its local profile context loads directly into the model context.
 
-Built with [Claude Code](https://claude.com/claude-code).
+Private context, environment files, project instructions, and Obsidian backups are excluded from version control. The public portfolio does not include personal documents.
